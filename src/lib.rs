@@ -1,5 +1,11 @@
 pub mod prelude;
 
+mod measured_future_exts;
+pub use measured_future_exts::MeasuredFutureExts;
+
+mod reporting_future_exts;
+pub use reporting_future_exts::ReportingFutureExts;
+
 mod measured_future;
 pub use measured_future::MeasuredFuture;
 
@@ -8,9 +14,8 @@ pub use reporting_future::ReportingFuture;
 
 mod metric_sink;
 pub use metric_sink::MetricSink;
+pub use metric_sink::DumpToStdout;
 
-mod measured_future_exts;
-pub use measured_future_exts::MeasuredFutureExts;
+mod storage;
+pub use storage::Report;
 
-mod reporting_future_exts;
-pub use reporting_future_exts::ReportingFutureExts;

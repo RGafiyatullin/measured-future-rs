@@ -3,32 +3,70 @@ use std::marker::Unpin;
 use std::pin::Pin;
 use std::task::Context;
 use std::task::Poll;
+use std::time::Duration;
+use std::time::Instant;
+
+use crate::MetricSink;
+use crate::storage::STORAGE;
+
+const DEFAULT_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug)]
-pub struct ReportingFuture<F, S> {
-    inner: F,
+pub struct ReportingFuture<F, S> 
+    where S: MetricSink,
+{
+    inner: Pin<Box<F>>,
     sink: S,
+    flush_interval: Duration,
+    flushed_at: Instant
 }
 
-impl<F, S> ReportingFuture<F, S> {
+impl<F, S> ReportingFuture<F, S> 
+    where S: MetricSink,
+{
     pub fn new(inner: F, sink: S) -> Self {
+        let inner = Box::pin(inner);
         Self {
             inner,
             sink,
+            flush_interval: DEFAULT_INTERVAL,
+            flushed_at: Instant::now(),
         }
     }
 }
 
 impl<F, S> Future for ReportingFuture<F, S>
 where
-    F: Future + Unpin,
-    S: Unpin,
+    F: Future,
+    S: MetricSink + Unpin,
 {
     type Output = F::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let measured_future = self.get_mut();
-        let inner_pin = Pin::new(measured_future);
-        inner_pin.poll(cx)
+        let reporting_future = self.get_mut();
+
+        let inner_pin = Pin::new(&mut reporting_future.inner);
+        let ret = inner_pin.poll(cx);
+
+        let dt = reporting_future.flushed_at.elapsed();
+        if dt > reporting_future.flush_interval {
+            reporting_future.flushed_at = Instant::now();
+
+            let report = STORAGE.with(|storage| storage.borrow_mut().flush());
+            
+            reporting_future.sink.report(report);
+        }
+
+        ret
+    }
+}
+
+impl<F, S> Drop for ReportingFuture<F, S> 
+where
+    S: MetricSink,
+{
+    fn drop(&mut self) {
+        let report = STORAGE.with(|storage| storage.borrow_mut().flush());
+        self.sink.report(report);
     }
 }
