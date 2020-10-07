@@ -17,10 +17,7 @@ pub struct MeasuredFuture<F> {
 impl<F> MeasuredFuture<F> {
     pub fn new(inner: F, key: &'static str) -> Self {
         let inner = Box::pin(inner);
-        Self {
-            inner,
-            key,
-        }
+        Self { inner, key }
     }
 }
 

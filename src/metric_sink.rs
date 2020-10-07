@@ -13,4 +13,3 @@ impl MetricSink for DumpToStdout {
         println!("=== ====== ===");
     }
 }
-

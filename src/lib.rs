@@ -13,9 +13,8 @@ mod reporting_future;
 pub use reporting_future::ReportingFuture;
 
 mod metric_sink;
-pub use metric_sink::MetricSink;
 pub use metric_sink::DumpToStdout;
+pub use metric_sink::MetricSink;
 
 mod storage;
 pub use storage::Report;
-

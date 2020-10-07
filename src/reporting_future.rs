@@ -6,23 +6,25 @@ use std::task::Poll;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::MetricSink;
 use crate::storage::STORAGE;
+use crate::MetricSink;
 
 const DEFAULT_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug)]
-pub struct ReportingFuture<F, S> 
-    where S: MetricSink,
+pub struct ReportingFuture<F, S>
+where
+    S: MetricSink,
 {
     inner: Pin<Box<F>>,
     sink: S,
     flush_interval: Duration,
-    flushed_at: Instant
+    flushed_at: Instant,
 }
 
-impl<F, S> ReportingFuture<F, S> 
-    where S: MetricSink,
+impl<F, S> ReportingFuture<F, S>
+where
+    S: MetricSink,
 {
     pub fn new(inner: F, sink: S) -> Self {
         let inner = Box::pin(inner);
@@ -60,7 +62,7 @@ where
 
             let mut report = STORAGE.with(|storage| storage.borrow_mut().flush());
             report.time = dt;
-            
+
             reporting_future.sink.report(report);
         }
 
@@ -68,7 +70,7 @@ where
     }
 }
 
-impl<F, S> Drop for ReportingFuture<F, S> 
+impl<F, S> Drop for ReportingFuture<F, S>
 where
     S: MetricSink,
 {

@@ -1,6 +1,5 @@
-
-use std::time::Duration;
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct Report {
@@ -14,7 +13,6 @@ impl Report {
         dump(self, 0);
     }
 }
-
 
 fn dump(report: &Report, ident: usize) {
     let ident_s = String::from_utf8(vec![b' '; ident]).unwrap();
