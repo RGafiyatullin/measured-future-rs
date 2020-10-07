@@ -1,4 +1,3 @@
-
 use super::*;
 
 pub struct State {
@@ -22,7 +21,7 @@ impl State {
         let next_frame_idx = self.frames.len();
 
         let current_idx = self.stack.last().copied().expect("pop: No current frame");
-        
+
         let current_frame = &mut self.frames[current_idx];
         let (child_idx, new_frame) = match current_frame.children.entry(key) {
             Entry::Occupied(occupied) => (*occupied.get(), false),
@@ -47,20 +46,28 @@ impl State {
     }
 
     pub fn flush(&mut self) -> Report {
-        frame_report(&self.frames, 0)
+        let report = frame_report(&self.frames, 0);
+        for frame in &mut self.frames {
+            frame.reset();
+        }
+        report
     }
 }
 
 fn frame_report(frames: &[Frame], frame_idx: usize) -> Report {
     let frame = &frames[frame_idx];
-    
+
     let time = frame.acc;
     let polls = frame.polls;
 
-    let children = frame.children.iter().map(|(ch_name, ch_idx)| {
-        let ch_report = frame_report(frames, *ch_idx);
-        (*ch_name, ch_report)
-    }).collect();
+    let children = frame
+        .children
+        .iter()
+        .map(|(ch_name, ch_idx)| {
+            let ch_report = frame_report(frames, *ch_idx);
+            (*ch_name, ch_report)
+        })
+        .collect();
 
     Report {
         time,

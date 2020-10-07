@@ -1,4 +1,3 @@
-
 use std::time::Duration;
 use std::time::Instant;
 
@@ -8,7 +7,11 @@ use ::measured_future_rs::prelude::*;
 async fn main() {
     println!("Hai!");
 
-    let () = run().measured("run").report(::measured_future_rs::DumpToStdout).with_flush_interval(Duration::from_secs(3)).await;
+    let () = run()
+        .measured("run")
+        .report(::measured_future_rs::DumpToStdout)
+        .with_flush_interval(Duration::from_secs(3))
+        .await;
 }
 
 async fn run() -> () {
@@ -21,7 +24,7 @@ async fn run() -> () {
 
         if started_at.elapsed().as_secs() > 7 {
             println!("Ciao!");
-            return ()
+            return ();
         }
     }
 }
@@ -48,4 +51,3 @@ async fn quick() -> () {
 async fn quick_1() -> () {}
 
 async fn quick_2() -> () {}
-
