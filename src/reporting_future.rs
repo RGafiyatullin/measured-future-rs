@@ -33,6 +33,12 @@ impl<F, S> ReportingFuture<F, S>
             flushed_at: Instant::now(),
         }
     }
+
+    pub fn with_flush_interval(mut self, flush_interval: Duration) -> Self {
+        self.flush_interval = flush_interval;
+
+        self
+    }
 }
 
 impl<F, S> Future for ReportingFuture<F, S>
@@ -52,7 +58,8 @@ where
         if dt > reporting_future.flush_interval {
             reporting_future.flushed_at = Instant::now();
 
-            let report = STORAGE.with(|storage| storage.borrow_mut().flush());
+            let mut report = STORAGE.with(|storage| storage.borrow_mut().flush());
+            report.time = dt;
             
             reporting_future.sink.report(report);
         }
