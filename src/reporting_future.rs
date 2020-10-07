@@ -75,7 +75,7 @@ where
                 .acc
                 .as_mut()
                 .expect("Stolen Acc :(")
-                .flush();
+                .flush(dt);
             reporting_future.sink.report(report);
         }
 
@@ -88,7 +88,8 @@ where
     S: MetricSink,
 {
     fn drop(&mut self) {
-        let report = self.acc.as_mut().expect("Acc Missing").flush();
+        let dt = self.flushed_at.elapsed();
+        let report = self.acc.as_mut().expect("Acc Missing").flush(dt);
         self.sink.report(report);
     }
 }

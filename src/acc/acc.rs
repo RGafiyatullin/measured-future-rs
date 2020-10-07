@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::time::Duration;
 
 use crate::report::Report;
 use crate::report::Scope;
@@ -21,7 +22,7 @@ impl Acc {
         }
     }
 
-    pub fn flush(&mut self) -> Report {
+    pub fn flush(&mut self, time: Duration) -> Report {
         let mut scopes = HashMap::new();
 
         for (root_k, root_idx) in &self.roots {
@@ -29,7 +30,7 @@ impl Acc {
         }
 
         let report = Report {
-            time: Default::default(),
+            time,
             scopes,
         };
 
