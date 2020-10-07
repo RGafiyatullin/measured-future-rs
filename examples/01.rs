@@ -10,7 +10,7 @@ async fn main() {
     let () = run()
         .measured("run")
         .report(::measured_future_rs::DumpToStdout)
-        .with_flush_interval(Duration::from_secs(3))
+        .with_flush_interval(Duration::from_millis(150))
         .await;
 }
 
@@ -22,7 +22,7 @@ async fn run() -> () {
         doit().measured("b").await;
         quick().measured("quick").await;
 
-        if started_at.elapsed().as_secs() > 7 {
+        if started_at.elapsed().as_secs() > 1 {
             println!("Ciao!");
             return ();
         }

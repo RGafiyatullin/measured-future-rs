@@ -13,7 +13,7 @@ impl Frame {
     pub fn empty() -> Self {
         Self {
             children: Default::default(),
-            acc: Duration::from_nanos(0),
+            acc: Default::default(),
             polls: 0,
         }
     }
@@ -22,8 +22,9 @@ impl Frame {
         self.acc = self.acc + dt;
         self.polls = self.polls + 1;
     }
+
     pub fn reset(&mut self) {
-        self.acc = Duration::from_nanos(0);
+        self.acc = Default::default();
         self.polls = 0;
     }
 }

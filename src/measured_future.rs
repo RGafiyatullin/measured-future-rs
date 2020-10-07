@@ -6,7 +6,7 @@ use std::task::Poll;
 
 use std::time::Instant;
 
-use crate::storage::STORAGE;
+use crate::acc::ACC;
 
 #[derive(Debug)]
 pub struct MeasuredFuture<F> {
@@ -30,8 +30,10 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let measured_future = self.get_mut();
 
-        let () = STORAGE.with(|storage| {
-            storage.borrow_mut().push(measured_future.key);
+        let () = ACC.with(|storage_opt| {
+            if let Some(ref mut storage) = *storage_opt.borrow_mut() {
+                storage.push(measured_future.key);
+            }
         });
 
         let inner_pin = Pin::new(&mut measured_future.inner);
@@ -40,8 +42,10 @@ where
         let ret = inner_pin.poll(cx);
         let dt = t0.elapsed();
 
-        let () = STORAGE.with(|storage| {
-            storage.borrow_mut().pop().add(dt);
+        let () = ACC.with(|storage_opt| {
+            if let Some(ref mut storage) = *storage_opt.borrow_mut() {
+                storage.pop().add(dt);
+            }
         });
 
         ret

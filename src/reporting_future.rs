@@ -6,8 +6,11 @@ use std::task::Poll;
 use std::time::Duration;
 use std::time::Instant;
 
-use crate::storage::STORAGE;
+// use crate::storage::STORAGE;
 use crate::MetricSink;
+
+use crate::acc::Acc;
+use crate::acc::ACC;
 
 const DEFAULT_INTERVAL: Duration = Duration::from_secs(5);
 
@@ -20,6 +23,7 @@ where
     sink: S,
     flush_interval: Duration,
     flushed_at: Instant,
+    acc: Option<Acc>,
 }
 
 impl<F, S> ReportingFuture<F, S>
@@ -33,6 +37,7 @@ where
             sink,
             flush_interval: DEFAULT_INTERVAL,
             flushed_at: Instant::now(),
+            acc: Some(Acc::empty()),
         }
     }
 
@@ -53,16 +58,24 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let reporting_future = self.get_mut();
 
-        let inner_pin = Pin::new(&mut reporting_future.inner);
+        let acc_mut = &mut reporting_future.acc;
+
+        let inner_mut = &mut reporting_future.inner;
+        let inner_pin = Pin::new(inner_mut);
+
+        let () = ACC.with(|acc| std::mem::swap(acc_mut, &mut *acc.borrow_mut()));
         let ret = inner_pin.poll(cx);
+        let () = ACC.with(|acc| std::mem::swap(acc_mut, &mut *acc.borrow_mut()));
+        assert!(reporting_future.acc.is_some());
 
         let dt = reporting_future.flushed_at.elapsed();
         if dt > reporting_future.flush_interval {
             reporting_future.flushed_at = Instant::now();
-
-            let mut report = STORAGE.with(|storage| storage.borrow_mut().flush());
-            report.time = dt;
-
+            let report = reporting_future
+                .acc
+                .as_mut()
+                .expect("Stolen Acc :(")
+                .flush();
             reporting_future.sink.report(report);
         }
 
@@ -75,7 +88,7 @@ where
     S: MetricSink,
 {
     fn drop(&mut self) {
-        let report = STORAGE.with(|storage| storage.borrow_mut().flush());
+        let report = self.acc.as_mut().expect("Acc Missing").flush();
         self.sink.report(report);
     }
 }
