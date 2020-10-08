@@ -29,10 +29,7 @@ impl Acc {
             flush_scope(&self.frames, &mut scopes, root_k, *root_idx);
         }
 
-        let report = Report {
-            time,
-            scopes,
-        };
+        let report = Report { time, scopes };
 
         for frame in &mut self.frames {
             frame.reset();
@@ -67,16 +64,13 @@ impl Acc {
             self.stack.push(child_frame_idx);
         } else {
             // 1. get or create root
-            let (root_idx, should_allocate) =
-                match self.roots.entry(key) {
-                    Entry::Occupied(occupied) => {
-                        (*occupied.get(), false)
-                    },
-                    Entry::Vacant(vacant) => {
-                        vacant.insert(next_frame_idx);
-                        (next_frame_idx, true)
-                    }
-                };
+            let (root_idx, should_allocate) = match self.roots.entry(key) {
+                Entry::Occupied(occupied) => (*occupied.get(), false),
+                Entry::Vacant(vacant) => {
+                    vacant.insert(next_frame_idx);
+                    (next_frame_idx, true)
+                }
+            };
 
             if should_allocate {
                 self.frames.push(Frame::empty());

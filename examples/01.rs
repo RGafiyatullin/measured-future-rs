@@ -3,15 +3,27 @@ use std::time::Instant;
 
 use ::measured_future_rs::prelude::*;
 
+use ::futures::prelude::*;
+
 #[tokio::main]
 async fn main() {
     println!("Hai!");
 
-    let () = run()
+    let (tx, mut rx) =
+        ::futures::channel::mpsc::channel::<::measured_future_rs::report::Report>(10);
+
+    let reports_received = async move {
+        while let Some(report) = rx.next().await {
+            println!("REPORT\n{:#?}\n", report);
+        }
+    };
+
+    let app_running = run()
         .measured("run")
-        .report(::measured_future_rs::DumpToStdout)
-        .with_flush_interval(Duration::from_millis(150))
-        .await;
+        .report(tx)
+        .with_flush_interval(Duration::from_millis(150));
+
+    future::join(reports_received, app_running).await;
 }
 
 async fn run() -> () {
