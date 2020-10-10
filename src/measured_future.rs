@@ -12,12 +12,17 @@ use crate::acc::ACC;
 pub struct MeasuredFuture<F> {
     inner: Pin<Box<F>>,
     key: &'static str,
+    first_poll_at: Option<Instant>,
 }
 
 impl<F> MeasuredFuture<F> {
     pub fn new(inner: F, key: &'static str) -> Self {
         let inner = Box::pin(inner);
-        Self { inner, key }
+        Self {
+            inner,
+            key,
+            first_poll_at: None,
+        }
     }
 }
 
@@ -30,6 +35,10 @@ where
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let measured_future = self.get_mut();
 
+        if measured_future.first_poll_at.is_none() {
+            measured_future.first_poll_at = Some(Instant::now());
+        }
+
         let () = ACC.with(|storage_opt| {
             if let Some(ref mut storage) = *storage_opt.borrow_mut() {
                 storage.push(measured_future.key);
@@ -40,11 +49,19 @@ where
 
         let t0 = Instant::now();
         let ret = inner_pin.poll(cx);
+        let is_ready = ret.is_ready();
         let dt = t0.elapsed();
 
         let () = ACC.with(|storage_opt| {
             if let Some(ref mut storage) = *storage_opt.borrow_mut() {
-                storage.pop().add(dt);
+                let frame = storage.pop();
+                frame.add_poll(dt);
+
+                if is_ready {
+                    if let Some(first_poll_at) = measured_future.first_poll_at {
+                        frame.add_completion(first_poll_at.elapsed())
+                    }
+                }
             }
         });
 

@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::time::Duration;
+use std::time::Instant;
 
 use crate::report::Report;
 use crate::report::Scope;
+use crate::report::Stats;
 
 use super::Frame;
 
@@ -23,17 +25,23 @@ impl Acc {
     }
 
     pub fn flush(&mut self, time: Duration) -> Report {
+        let flush_start_at = Instant::now();
+
         let mut scopes = HashMap::new();
 
         for (root_k, root_idx) in &self.roots {
             flush_scope(&self.frames, &mut scopes, root_k, *root_idx);
         }
 
-        let report = Report { time, scopes };
-
         for frame in &mut self.frames {
             frame.reset();
         }
+
+        let report = Report {
+            time,
+            scopes,
+            overhead: flush_start_at.elapsed(),
+        };
 
         report
     }
@@ -100,14 +108,7 @@ fn flush_scope(
 
     let scope =
         match scopes.entry(key) {
-            Entry::Vacant(vacant) => {
-                let scope = Scope {
-                    time: Default::default(),
-                    polls: 0,
-                    scopes: Default::default(),
-                };
-                vacant.insert(scope)
-            },
+            Entry::Vacant(vacant) => vacant.insert(Default::default()),
             Entry::Occupied(_occupied) => unreachable!("We do not expect duplicate scope-names since they are provided by the HashMap iterator"),
         };
 
@@ -119,7 +120,7 @@ fn flush_scope(
         flush_scope(frames, &mut sub_scopes, sub_key, *sub_idx);
     }
 
-    scope.polls = frame.polls;
-    scope.time = frame.acc;
+    scope.poll = Stats::from(&frame.poll_durations[..]);
+    scope.comp = Stats::from(&frame.completion_durations[..]);
     scope.scopes = sub_scopes;
 }

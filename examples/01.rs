@@ -21,7 +21,7 @@ async fn main() {
     let app_running = run()
         .measured("run")
         .report(tx)
-        .with_flush_interval(Duration::from_millis(150));
+        .with_flush_interval(Duration::from_millis(900));
 
     future::join(reports_received, app_running).await;
 }

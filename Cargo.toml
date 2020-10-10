@@ -1,6 +1,6 @@
 [package]
 name = "measured-future-rs"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Roman Gafiyatullin <r.gafiyatullin@me.com>"]
 edition = "2018"
 description = "A wrapper for std::future::Future that measures the CPU-time it takes to be computed"
@@ -12,7 +12,9 @@ repository = "https://github.com/RGafiyatullin/measured-future-rs"
 
 [dependencies]
 log = "^0.4"
+stat = "^0.2"
 futures = "^0.3"
 
 [dev-dependencies]
 tokio = {version = "~0.2", features = ["full"]}
+num_cpus = "^1"
