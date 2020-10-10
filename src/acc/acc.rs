@@ -24,7 +24,7 @@ impl Acc {
         }
     }
 
-    pub fn flush(&mut self, time: Duration) -> Report {
+    pub fn flush(&mut self, start: Instant, end: Instant) -> Report {
         let flush_start_at = Instant::now();
 
         let mut scopes = HashMap::new();
@@ -38,7 +38,8 @@ impl Acc {
         }
 
         let report = Report {
-            time,
+            start,
+            end,
             scopes,
             overhead: flush_start_at.elapsed(),
         };

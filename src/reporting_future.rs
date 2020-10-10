@@ -68,14 +68,15 @@ where
         let () = ACC.with(|acc| std::mem::swap(acc_mut, &mut *acc.borrow_mut()));
         assert!(reporting_future.acc.is_some());
 
-        let dt = reporting_future.flushed_at.elapsed();
-        if dt > reporting_future.flush_interval {
+        if reporting_future.flushed_at.elapsed() > reporting_future.flush_interval {
+            let start = reporting_future.flushed_at;
             reporting_future.flushed_at = Instant::now();
             let report = reporting_future
                 .acc
                 .as_mut()
                 .expect("Stolen Acc :(")
-                .flush(dt);
+                .flush(start, reporting_future.flushed_at);
+
             reporting_future.sink.report(report);
         }
 
@@ -88,8 +89,11 @@ where
     S: MetricSink,
 {
     fn drop(&mut self) {
-        let dt = self.flushed_at.elapsed();
-        let report = self.acc.as_mut().expect("Acc Missing").flush(dt);
+        let report = self
+            .acc
+            .as_mut()
+            .expect("Acc Missing")
+            .flush(self.flushed_at, Instant::now());
         self.sink.report(report);
     }
 }

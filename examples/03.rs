@@ -7,12 +7,13 @@ use ::futures::channel::oneshot;
 use ::futures::prelude::*;
 
 use ::measured_future_rs::prelude::*;
+use ::measured_future_rs::report::Report;
 
 #[tokio::main]
 async fn main() {
     println!("num_cpus: {}", ::num_cpus::get());
 
-    let iterations = 16 * 10240;
+    let iterations = 16 * 102400;
 
     for producers_count in &[/*1, 2, 4, 8, 16, 32, */ 64] {
         run(*producers_count, iterations).await;
@@ -20,6 +21,18 @@ async fn main() {
 }
 
 async fn run(producers_count: usize, iterations: usize) {
+    let (report_tx, mut report_rx) = mpsc::channel(256);
+    let report_aggregator_running = async move {
+        let mut report = Report::empty();
+
+        while let Some(r) = report_rx.next().await {
+            report = report.merge(r);
+        }
+
+        println!("{:#?}", report);
+    };
+    ::tokio::spawn(report_aggregator_running);
+
     let iterations_per_worker = iterations / producers_count;
 
     let (_join_producer_times, join_consumer_time) = {
@@ -30,7 +43,8 @@ async fn run(producers_count: usize, iterations: usize) {
         let (producer_times, (consumer_time, ())) =
             future::join(producers_running, consumer_running)
                 .measured("join")
-                .report(::measured_future_rs::DumpToStdout)
+                .report(report_tx)
+                .with_flush_interval(Duration::from_millis(100))
                 .await;
         (producer_times, consumer_time)
     };
