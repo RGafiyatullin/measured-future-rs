@@ -1,6 +1,6 @@
 [package]
 name = "measured-future-rs"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["Roman Gafiyatullin <r.gafiyatullin@me.com>"]
 edition = "2018"
 description = "A wrapper for std::future::Future that measures the CPU-time it takes to be computed"
