@@ -1,34 +1,23 @@
-pub mod prelude;
+pub mod meter;
+pub mod meters;
 
-mod measured_future_exts;
-pub use measured_future_exts::MeasuredFutureExts;
+pub mod report_sink;
+pub mod report_sinks;
 
-mod reporting_future_exts;
-pub use reporting_future_exts::ReportingFutureExts;
+pub mod measured_future;
+pub mod reporting_future;
 
-mod measured_future;
-pub use measured_future::MeasuredFuture;
+pub mod measured_future_ext;
+pub mod reporting_future_ext;
 
-mod reporting_future;
-pub use reporting_future::ReportingFuture;
+pub mod prelude {
+    pub use crate::measured_future::MeasuredFuture;
+    pub use crate::meter::Meter;
 
-mod installing_future;
-pub use installing_future::InstallingFuture;
+    pub use crate::measured_future_ext::MeasuredFutureExt;
+    pub use crate::reporting_future_ext::ReportingFutureExt;
 
-mod installing_future_exts;
-pub use installing_future_exts::InstallingFutureExts;
-
-mod metric_sink;
-pub use metric_sink::DiscardReports;
-pub use metric_sink::DumpToStdout;
-pub use metric_sink::MetricSink;
-
-mod metric_sink_exts;
-pub use metric_sink_exts::MetricSinkInstallExts;
-
-mod acc;
-
-mod sink;
-pub use sink::MetricSinkFactory;
-
-pub mod report;
+    pub mod report_sink {
+        pub use crate::report_sink::install;
+    }
+}

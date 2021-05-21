@@ -10,12 +10,25 @@ repository = "https://github.com/RGafiyatullin/measured-future-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = []
+debug-logs = ["log"]
+# serde-report = ["serde"]
+
+
 [dependencies]
 futures = "^0.3"
-log = "^0.4"
 pin-project = "^1"
 stat = "^0.2"
+polymap = "^0.3"
+tokio = {version = "^1", features = ["rt"]}
+serde = {version = "^1", features = ["derive"]}
+# serde = { version = "^1", feature = ["derive"], optional = true }
+log = { version = "^0.4", optional = true }
+
+
 
 [dev-dependencies]
 num_cpus = "^1"
 tokio = {version = "^1", features = ["full"]}
+pretty_env_logger = "^0.4"
