@@ -13,9 +13,12 @@ async fn main() {
     let app_running = run()
         .measured("run")
         .report_to_installed()
-        .with_flush_interval(Duration::from_millis(900));
+        .with_flush_interval(Duration::from_millis(900))
+        .installing_current();
 
-    app_running.await
+    let complete = ::tokio::spawn(app_running);
+
+    complete.await;
 }
 
 async fn run() -> () {

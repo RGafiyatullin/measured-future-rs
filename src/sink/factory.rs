@@ -20,7 +20,7 @@ where
     }
 }
 
-pub trait MetricSinkFactory {
+pub trait MetricSinkFactory: Send + Sync + 'static {
     fn create_metric_sink(&self) -> Box<dyn MetricSink>;
     fn clone(&self) -> Box<dyn MetricSinkFactory>;
 }

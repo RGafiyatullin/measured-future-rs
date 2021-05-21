@@ -4,37 +4,38 @@ use std::pin::Pin;
 use std::task::Context;
 use std::task::Poll;
 
-use crate::MetricSinkInstall;
+use crate::sink::MetricSinkFactory;
 
 #[::pin_project::pin_project]
-pub struct InstallingFuture<F, S> {
+pub struct InstallingFuture<F> {
     #[pin]
     inner: F,
 
     #[pin]
-    sink_opt: Option<S>,
+    sink_factory_opt: Option<Box<dyn MetricSinkFactory>>,
 }
 
-impl<F, S> InstallingFuture<F, S> {
-    pub fn new(inner: F, sink: S) -> Self {
-        // let inner = Box::pin(inner);
-        let sink_opt = Some(sink);
-        Self { inner, sink_opt }
+impl<F> InstallingFuture<F> {
+    pub fn new(inner: F, sink_factory: Box<dyn MetricSinkFactory>) -> Self {
+        let sink_factory_opt = Some(sink_factory);
+        Self {
+            inner,
+            sink_factory_opt,
+        }
     }
 }
 
-impl<F, S> Future for InstallingFuture<F, S>
+impl<F> Future for InstallingFuture<F>
 where
     F: Future,
-    S: MetricSinkInstall + Unpin,
 {
     type Output = F::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
 
-        if let Some(sink) = this.sink_opt.get_mut().take() {
-            sink.install();
+        if let Some(sink_factory) = this.sink_factory_opt.get_mut().take() {
+            let _ = crate::sink::SINK.with(|tl_factory| tl_factory.replace(sink_factory));
         }
 
         this.inner.poll(cx)
