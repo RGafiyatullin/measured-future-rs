@@ -4,8 +4,6 @@ use std::time::Instant;
 use ::measured_future_rs::prelude::*;
 use ::measured_future_rs::DumpToStdout;
 
-use ::futures::prelude::*;
-
 #[tokio::main]
 async fn main() {
     println!("Hai!");

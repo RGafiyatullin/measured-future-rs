@@ -6,14 +6,18 @@ use std::task::Poll;
 
 use crate::MetricSinkInstall;
 
+#[::pin_project::pin_project]
 pub struct InstallingFuture<F, S> {
-    inner: Pin<Box<F>>,
+    #[pin]
+    inner: F,
+
+    #[pin]
     sink_opt: Option<S>,
 }
 
 impl<F, S> InstallingFuture<F, S> {
     pub fn new(inner: F, sink: S) -> Self {
-        let inner = Box::pin(inner);
+        // let inner = Box::pin(inner);
         let sink_opt = Some(sink);
         Self { inner, sink_opt }
     }
@@ -27,13 +31,12 @@ where
     type Output = F::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let installing_future = self.get_mut();
-        if let Some(sink) = installing_future.sink_opt.take() {
+        let this = self.project();
+
+        if let Some(sink) = this.sink_opt.get_mut().take() {
             sink.install();
         }
 
-        let inner_pin = Pin::new(&mut installing_future.inner);
-
-        inner_pin.poll(cx)
+        this.inner.poll(cx)
     }
 }

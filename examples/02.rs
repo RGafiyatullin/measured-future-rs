@@ -95,7 +95,7 @@ async fn run_producer(mut tx: mpsc::Sender<Message>, iterations: usize) {
 }
 
 async fn run_consumer(mut rx: mpsc::Receiver<Message>) {
-    while let Some(message) = rx.next().await {}
+    while let Some(_message) = rx.next().await {}
 }
 
 async fn time_it<F: Future>(f: F) -> (Duration, F::Output) {

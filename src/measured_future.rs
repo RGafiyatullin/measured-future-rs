@@ -1,5 +1,5 @@
+use std::borrow::Borrow;
 use std::future::Future;
-// use std::marker::Unpin;
 use std::pin::Pin;
 use std::task::Context;
 use std::task::Poll;
@@ -8,16 +8,19 @@ use std::time::Instant;
 
 use crate::acc::ACC;
 
+#[::pin_project::pin_project]
 #[derive(Debug)]
 pub struct MeasuredFuture<F> {
-    inner: Pin<Box<F>>,
+    #[pin]
+    inner: F,
+    #[pin]
     key: &'static str,
+    #[pin]
     first_poll_at: Option<Instant>,
 }
 
 impl<F> MeasuredFuture<F> {
     pub fn new(inner: F, key: &'static str) -> Self {
-        let inner = Box::pin(inner);
         Self {
             inner,
             key,
@@ -33,22 +36,24 @@ where
     type Output = F::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let measured_future = self.get_mut();
+        let this = self.project();
 
-        if measured_future.first_poll_at.is_none() {
-            measured_future.first_poll_at = Some(Instant::now());
+        let first_poll_at = this.first_poll_at.get_mut();
+        let key = this.key.borrow();
+        let inner = this.inner;
+
+        if first_poll_at.is_none() {
+            *first_poll_at = Some(Instant::now());
         }
 
         let () = ACC.with(|storage_opt| {
             if let Some(ref mut storage) = *storage_opt.borrow_mut() {
-                storage.push(measured_future.key);
+                storage.push(key);
             }
         });
 
-        let inner_pin = Pin::new(&mut measured_future.inner);
-
         let t0 = Instant::now();
-        let ret = inner_pin.poll(cx);
+        let ret = inner.poll(cx);
         let is_ready = ret.is_ready();
         let dt = t0.elapsed();
 
@@ -58,7 +63,7 @@ where
                 frame.add_poll(dt);
 
                 if is_ready {
-                    if let Some(first_poll_at) = measured_future.first_poll_at {
+                    if let Some(first_poll_at) = first_poll_at {
                         frame.add_completion(first_poll_at.elapsed())
                     }
                 }
