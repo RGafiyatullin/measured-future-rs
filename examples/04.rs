@@ -2,6 +2,7 @@ use std::time::Duration;
 use std::time::Instant;
 
 use ::measured_future_rs::prelude::*;
+use ::measured_future_rs::DumpToStdout;
 
 use ::futures::prelude::*;
 
@@ -9,21 +10,14 @@ use ::futures::prelude::*;
 async fn main() {
     println!("Hai!");
 
-    let (tx, mut rx) =
-        ::futures::channel::mpsc::channel::<::measured_future_rs::report::Report>(10);
-
-    let reports_received = async move {
-        while let Some(report) = rx.next().await {
-            println!("REPORT\n{:#?}\n", report);
-        }
-    };
+    let () = DumpToStdout.install();
 
     let app_running = run()
         .measured("run")
-        .report_to(tx)
+        .report_to_installed()
         .with_flush_interval(Duration::from_millis(900));
 
-    future::join(reports_received, app_running).await;
+    app_running.await
 }
 
 async fn run() -> () {

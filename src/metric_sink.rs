@@ -4,11 +4,37 @@ use std::sync::mpsc::Sender as SyncSender;
 
 use ::futures::channel::mpsc::Sender as AsyncSender;
 
-pub trait MetricSink: Sized {
+pub trait MetricSink {
     fn report(&mut self, report: Report);
 }
 
+pub trait MetricSinkInstall: MetricSink {
+    fn install(self);
+}
+
+impl MetricSink for Box<dyn MetricSink> {
+    fn report(&mut self, report: Report) {
+        self.as_mut().report(report)
+    }
+}
+
+impl<S> MetricSinkInstall for S
+where
+    S: MetricSink + Clone + 'static,
+{
+    fn install(self) {
+        crate::sink::SINK.with(|factory| {
+            *factory.borrow_mut() =
+                Box::new(crate::sink::factory::MetricSinkFactoryImpl::new(self));
+        });
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct DumpToStdout;
+
+#[derive(Debug, Clone, Copy)]
+pub struct DiscardReports;
 
 impl MetricSink for DumpToStdout {
     fn report(&mut self, report: Report) {
@@ -16,6 +42,10 @@ impl MetricSink for DumpToStdout {
         println!("{:#?}", report);
         println!("=== ====== ===");
     }
+}
+
+impl MetricSink for DiscardReports {
+    fn report(&mut self, _report: Report) {}
 }
 
 impl<R> MetricSink for SyncSender<R>

@@ -50,7 +50,7 @@ async fn run(channels_count: usize, producers_count: usize, iterations: usize) {
         let (producer_times, (consumer_time, ())) =
             future::join(producers_running, consumer_running)
                 .measured("join")
-                .report(report_tx.clone())
+                .report_to(report_tx.clone())
                 .with_flush_interval(Duration::from_millis(100))
                 .await;
         (producer_times, consumer_time)
@@ -71,13 +71,13 @@ async fn run(channels_count: usize, producers_count: usize, iterations: usize) {
         let producer_running = ::tokio::spawn(
             run_producers(producers_count, tx_roulette, iterations_per_worker)
                 .measured("spawn")
-                .report(report_tx.clone()),
+                .report_to(report_tx.clone()),
         );
         let consumer_running = ::tokio::spawn(time_it(
             run_consumer(rxs)
                 .measured("consumer")
                 .measured("spawn")
-                .report(report_tx.clone()),
+                .report_to(report_tx.clone()),
         ));
 
         let (producer_result, consumer_result) =

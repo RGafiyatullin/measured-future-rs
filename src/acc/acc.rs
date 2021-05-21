@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::time::Duration;
 use std::time::Instant;
 
 use crate::report::Report;

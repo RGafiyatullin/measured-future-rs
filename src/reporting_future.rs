@@ -15,10 +15,7 @@ use crate::acc::ACC;
 const DEFAULT_INTERVAL: Duration = Duration::from_secs(5);
 
 #[derive(Debug)]
-pub struct ReportingFuture<F, S>
-where
-    S: MetricSink,
-{
+pub struct ReportingFuture<F, S> {
     inner: Pin<Box<F>>,
     sink: S,
     flush_interval: Duration,
@@ -68,7 +65,8 @@ where
         let () = ACC.with(|acc| std::mem::swap(acc_mut, &mut *acc.borrow_mut()));
         assert!(reporting_future.acc.is_some());
 
-        if reporting_future.flushed_at.elapsed() > reporting_future.flush_interval || ret.is_ready() {
+        if reporting_future.flushed_at.elapsed() > reporting_future.flush_interval || ret.is_ready()
+        {
             let start = reporting_future.flushed_at;
             reporting_future.flushed_at = Instant::now();
             let report = reporting_future

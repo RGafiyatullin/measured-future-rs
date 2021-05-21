@@ -12,10 +12,18 @@ pub use measured_future::MeasuredFuture;
 mod reporting_future;
 pub use reporting_future::ReportingFuture;
 
+mod installing_future;
+pub use installing_future::InstallingFuture;
+
 mod metric_sink;
+pub use metric_sink::DiscardReports;
 pub use metric_sink::DumpToStdout;
 pub use metric_sink::MetricSink;
+pub use metric_sink::MetricSinkInstall;
 
 mod acc;
+
+mod sink;
+pub use sink::MetricSinkFactory;
 
 pub mod report;

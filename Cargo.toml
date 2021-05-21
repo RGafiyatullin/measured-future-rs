@@ -1,6 +1,6 @@
 [package]
 name = "measured-future-rs"
-version = "0.3.2"
+version = "0.4.0"
 authors = ["Roman Gafiyatullin <r.gafiyatullin@me.com>"]
 edition = "2018"
 description = "A wrapper for std::future::Future that measures the CPU-time it takes to be computed"
@@ -11,10 +11,11 @@ repository = "https://github.com/RGafiyatullin/measured-future-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "^0.4"
-stat = "^0.2"
 futures = "^0.3"
+log = "^0.4"
+pin-project = "^1"
+stat = "^0.2"
 
 [dev-dependencies]
-tokio = {version = "~0.2", features = ["full"]}
 num_cpus = "^1"
+tokio = {version = "^1", features = ["full"]}

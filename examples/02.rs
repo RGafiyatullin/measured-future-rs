@@ -18,7 +18,7 @@ async fn main() {
 async fn run(producers_count: usize, iterations: usize) {
     let iterations_per_worker = iterations / producers_count;
 
-    let (join_producer_times, join_consumer_time) = {
+    let (_join_producer_times, join_consumer_time) = {
         let (tx, rx) = mpsc::channel::<Message>(0);
         let producers_running = run_producers(producers_count, tx, iterations_per_worker);
         let consumer_running = time_it(run_consumer(rx));
@@ -31,7 +31,7 @@ async fn run(producers_count: usize, iterations: usize) {
     let join_consumer_rate =
         iterations as f64 / join_consumer_time.as_nanos() as f64 * 1_000_000_000 as f64;
 
-    let (spawn_producer_times, spawn_consumer_time) = {
+    let (_spawn_producer_times, spawn_consumer_time) = {
         let (tx, rx) = mpsc::channel::<Message>(0);
         let producer_running =
             ::tokio::spawn(run_producers(producers_count, tx, iterations_per_worker));
@@ -73,7 +73,7 @@ async fn run_producers(
     future::join_all(
         (0..producers_count)
             .into_iter()
-            .map({ |_| time_it(run_producer(tx.clone(), iterations)) }),
+            .map(|_| time_it(run_producer(tx.clone(), iterations))),
     )
     .await
     .into_iter()
