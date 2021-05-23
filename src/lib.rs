@@ -12,7 +12,7 @@ pub mod reporting_future_ext;
 
 pub mod prelude {
     pub use crate::meter::Meter;
-    
+
     pub use crate::measured_future_ext::MeasuredFutureExt;
     pub use crate::reporting_future_ext::ReportingFutureExt;
 

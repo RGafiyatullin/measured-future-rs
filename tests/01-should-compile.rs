@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use ::futures::prelude::*;
 use ::measured_future_rs::prelude::*;
 use ::measured_future_rs::report_sinks::DefaultSink;
 
@@ -9,7 +10,13 @@ async fn should_compile() {
         .filter_level("TRACE".parse().unwrap())
         .try_init();
 
-    let () = DefaultSink::install();
+    let () = DefaultSink::install(
+        sink::unfold((), |(), report| async move {
+            println!("{:#?}", report);
+            Ok(())
+        }),
+        |_: &std::convert::Infallible| true,
+    );
 
     let future = async {
         println!("actually do something...");

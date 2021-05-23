@@ -1,5 +1,7 @@
 use super::*;
 
+use std::collections::HashMap;
+
 use ::futures::prelude::*;
 
 use crate::meters::default_meter::DefaultMeterReport;
@@ -7,7 +9,7 @@ use crate::report_sink::BoxedReportSink;
 use crate::report_sink::ReportSink;
 
 mod aggregator;
-pub use aggregator::Aggregator;
+use aggregator::Aggregator;
 pub use aggregator::Scope;
 pub use aggregator::ScopeProps;
 
@@ -17,7 +19,11 @@ pub struct DefaultSink {
 }
 
 impl DefaultSink {
-    pub fn install() {
+    pub fn install<S, E, F>(handler: S, is_terminal: F)
+    where
+        S: Sink<HashMap<&'static str, Scope>, Error = E> + Send + Sync + 'static,
+        F: Fn(&E) -> bool + Send + Sync + 'static,
+    {
         let (mpsc_sink, rx) = MpscUnboundedSink::create();
         let aggregating_sink = AggregatingSink::new(mpsc_sink);
 
@@ -27,8 +33,21 @@ impl DefaultSink {
 
         let _ = ::tokio::spawn(async move {
             ::futures::pin_mut!(rx);
+            ::futures::pin_mut!(handler);
             while let Some(event) = rx.next().await {
-                println!("{:#?}", event)
+                if let Err(reason) = handler.send(event.sub).await {
+                    let is_terminal = is_terminal(&reason);
+                    #[cfg(feature = "debug-logs")]
+                    log::warn!(
+                        "error sending another report [is-terminal: {}]: {:#?}",
+                        is_terminal,
+                        reason
+                    );
+
+                    if is_terminal {
+                        break;
+                    }
+                }
             }
         });
 
