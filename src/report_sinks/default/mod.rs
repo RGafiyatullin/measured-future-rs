@@ -13,12 +13,12 @@ pub use aggregator::ScopeProps;
 
 #[derive(Debug, Clone)]
 pub struct DefaultSink {
-    sink: AggregatingSink<Aggregator, MpscSink<Aggregator>>,
+    sink: AggregatingSink<Aggregator, MpscUnboundedSink<Aggregator>>,
 }
 
 impl DefaultSink {
     pub fn install() {
-        let (mpsc_sink, rx) = MpscSink::create(0);
+        let (mpsc_sink, rx) = MpscUnboundedSink::create();
         let aggregating_sink = AggregatingSink::new(mpsc_sink);
 
         let sink = Self {

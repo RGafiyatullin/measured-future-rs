@@ -5,6 +5,7 @@ mod default_meter_report;
 pub use default_meter_report::DefaultMeterReport;
 
 mod impl_default_meter;
+mod impl_from_static_str;
 mod impl_meter;
 
 pub struct DefaultMeter {

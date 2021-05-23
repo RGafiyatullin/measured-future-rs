@@ -10,5 +10,8 @@ pub use aggregating::AggregatingSink;
 pub mod default;
 pub use default::DefaultSink;
 
-pub mod mpsc;
-pub use mpsc::MpscSink;
+pub mod mpsc_bounded;
+pub use mpsc_bounded::MpscBoundedSink;
+
+pub mod mpsc_unbounded;
+pub use mpsc_unbounded::MpscUnboundedSink;

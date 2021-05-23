@@ -5,9 +5,9 @@ use ::futures::channel::mpsc;
 use crate::report_sink::BoxedReportSink;
 use crate::report_sink::ReportSink;
 
-pub struct MpscSink<R>(mpsc::Sender<R>);
+pub struct MpscBoundedSink<R>(mpsc::Sender<R>);
 
-impl<R> MpscSink<R>
+impl<R> MpscBoundedSink<R>
 where
     R: Send + Sync + 'static,
 {
@@ -20,19 +20,19 @@ where
     }
 }
 
-impl<R> Clone for MpscSink<R> {
+impl<R> Clone for MpscBoundedSink<R> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<R> fmt::Debug for MpscSink<R> {
+impl<R> fmt::Debug for MpscBoundedSink<R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct(std::any::type_name::<Self>()).finish()
     }
 }
 
-impl<R> ReportSink<R> for MpscSink<R>
+impl<R> ReportSink<R> for MpscBoundedSink<R>
 where
     R: Send + Sync + 'static,
 {
