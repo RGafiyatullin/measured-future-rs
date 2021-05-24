@@ -7,7 +7,12 @@ pub use dumping_to_stdout::DumpingToStdoutSink;
 pub mod aggregating;
 pub use aggregating::AggregatingSink;
 
+pub mod treemap;
+pub use treemap::TreemapSink;
+
+#[deprecated(since = "0.4.2")]
 pub mod default;
+#[deprecated(since = "0.4.2")]
 pub use default::DefaultSink;
 
 pub mod mpsc_bounded;

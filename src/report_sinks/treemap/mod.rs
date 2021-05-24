@@ -14,12 +14,12 @@ pub use aggregator::Scope;
 pub use aggregator::ScopeProps;
 
 #[derive(Debug, Clone)]
-pub struct DefaultSink {
+pub struct TreemapSink {
     sink: AggregatingSink<Aggregator, MpscUnboundedSink<Aggregator>>,
 }
 
-impl DefaultSink {
-    pub fn install<S, E, F>(handler: S, is_terminal: F)
+impl TreemapSink {
+    pub fn install<S, E, F>(handler: S, is_sink_failure_terminal: F)
     where
         S: Sink<HashMap<&'static str, Scope>, Error = E> + Send + Sync + 'static,
         F: Fn(&E) -> bool + Send + Sync + 'static,
@@ -36,7 +36,7 @@ impl DefaultSink {
             ::futures::pin_mut!(handler);
             while let Some(event) = rx.next().await {
                 if let Err(reason) = handler.send(event.sub).await {
-                    let is_terminal = is_terminal(&reason);
+                    let is_terminal = is_sink_failure_terminal(&reason);
                     #[cfg(feature = "debug-logs")]
                     log::warn!(
                         "error sending another report [is-terminal: {}]: {:#?}",
@@ -55,7 +55,7 @@ impl DefaultSink {
     }
 }
 
-impl ReportSink<DefaultMeterReport> for DefaultSink {
+impl ReportSink<DefaultMeterReport> for TreemapSink {
     fn send_report(&mut self, report: DefaultMeterReport) {
         self.sink.send_report(report);
     }
